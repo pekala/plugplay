@@ -1,0 +1,26 @@
+{
+  "name": "plugplay",
+  "version": "0.0.1-alpha",
+  "main": "index.js",
+  "repository": {},
+  "author": "Maciek Pekala <m@peka.la>",
+  "license": "MIT",
+  "scripts": {
+    "build-client": "browserify example/index.client.js -o example/bundle.js",
+    "watch-client": "watchify example/index.client.js -o example/bundle.js",
+    "start": "node example/index.server.js"
+  },
+  "dependencies": {
+    "express": "^4.15.0",
+    "moniker": "^0.1.2",
+    "redux": "^3.6.0",
+    "socket.io": "^1.7.3"
+  },
+  "devDependencies": {
+    "browserify": "^14.1.0",
+    "jest": "^19.0.2",
+    "standard": "^9.0.1",
+    "watchify": "^3.9.0",
+    "yo-yo": "^1.4.0"
+  }
+}

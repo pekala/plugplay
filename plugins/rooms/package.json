@@ -1,0 +1,8 @@
+{
+  "name": "plugplay-plugin-rooms",
+  "version": "0.0.0",
+  "main": "server.js",
+  "repository": {},
+  "author": "Maciek Pekala <m@peka.la>",
+  "license": "MIT"
+}
