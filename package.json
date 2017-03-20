@@ -1,7 +1,6 @@
 {
   "name": "plugplay",
   "version": "0.0.1-alpha",
-  "main": "index.js",
   "repository": {},
   "author": "Maciek Pekala <m@peka.la>",
   "license": "MIT",

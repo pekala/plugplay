@@ -21,48 +21,56 @@ function Results ({ hasWon, onRematch }) {
   </div>`
 }
 
-const onCellSelect = cellId => actions.playerAction('cell select', cellId)
-const onRematch = cellId => actions.playerAction('rematch')
-
-function Game (state) {
-  if (state.roomId) {
-    return yo`<div>
-      Currently in ${state.roomId}
-      <br> Players in room: ${state.players.length} <br>
-      ${state.isFull ? 'Room is full' : ''}
-      ${state.isReady ? 'Room is ready' : ''}
-      <br>${state.isReady && state.myTurn ? 'Your turn!' : ''}
-      ${state.isReady && !state.myTurn ? 'Opponent\'s turn' : ''}<br>
-      ${state.mySymbol ? `Your symbol: ${state.mySymbol}` : ''}
-      <br><button onclick=${roomsPlugin.actions.leave}>Leave room</button><br>
-
-      ${state.data ? Board({
-        boardState: state.data.board,
-        symbols: state.data.playersSymbols,
-        readOnly: !state.myTurn || state.winner,
-        onCellSelect
-      }) : ''}
-
-      ${state.data && state.data.winner ? Results({ hasWon: state.hasWon, onRematch }) : ''}
-    </div>`
-  }
-  return yo`<div>
+function Lobby (rooms) {
+  return yo`<div class="Lobby">
     Rooms
     <ul>
-      ${state.rooms.ids.map(roomId => yo`<li>
-        ${roomId} (${state.rooms.byId[roomId].players.length} players)
-        <button onclick=${() => roomsPlugin.actions.join(roomId)}>Join</button>
+      ${rooms.map(room => yo`<li>
+        ${room.roomId} (${room.players.length} players)
+        <button onclick=${() => actions.rooms.join(room.roomId)}>Join</button>
       </li>`)}
     </ul>
-    <button onclick=${roomsPlugin.actions.create}>Create new room</button>
+    <button onclick=${actions.rooms.create}>Create new room</button>
   </div>`
 }
 
-const el = Game({ rooms: { ids: [], byId: {} } })
+function Room (props) {
+  return yo`<div class="Room">
+    Currently in ${props.roomId}
+    <br> Players in room: ${props.players.length} <br>
+    ${props.isFull ? 'Room is full' : ''}
+    ${props.isReady ? 'Room is ready' : ''}
+    <br>${props.isReady && props.isMyTurn ? 'Your turn!' : ''}
+    ${props.isReady && !props.isMyTurn ? 'Opponent\'s turn' : ''}<br>
+    ${props.mySymbol ? `Your symbol: ${props.mySymbol}` : ''}
+    <br><button onclick=${actions.rooms.leave}>Leave room</button><br>
+
+    ${props.board ? Board({
+      boardprops: props.board,
+      symbols: props.playersSymbols,
+      readOnly: !props.isMyTurn || props.winner,
+      onCellSelect
+    }) : ''}
+
+    ${props.winner ? Results({ hasWon: props.hasWon, onRematch }) : ''}
+  </div>`
+}
+
+const onCellSelect = cellId => actions.default('cell select', cellId)
+const onRematch = cellId => actions.default('rematch')
+
+function Game (props = { rooms: [] }) {
+  if (props.roomId) {
+    return Room(props)
+  }
+  return Lobby(props.rooms)
+}
+
+const el = Game()
 document.body.appendChild(el)
 
-const { actions } = plugplay(
-  'https://plugplay-dusotaetuw.now.sh',
-  [playersPlugin, roomsPlugin],
-  state => yo.update(el, Game(state))
-)
+const actions = plugplay({
+  serverUrl: 'localhost:3000',
+  plugins: [playersPlugin, roomsPlugin],
+  onPropsUpdated: props => console.log(props) || yo.update(el, Game(props))
+})

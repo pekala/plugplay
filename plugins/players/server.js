@@ -11,7 +11,7 @@ function getPlayerForSocket (state, socketId) {
 const middleware = store => next => action => {
   const state = store.getState()
 
-  if (action.type === '@@_SOCKET_DATA') {
+  if (getPlayerForSocket(state, action.payload.socketId)) {
     next(Object.assign({}, action, {
       payload: Object.assign({}, action.payload, {
         playerId: getPlayerForSocket(state, action.payload.socketId)
@@ -19,17 +19,6 @@ const middleware = store => next => action => {
     }))
   } else {
     next(action)
-  }
-
-  if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'player action') {
-    next({
-      type: 'players/ACTION',
-      payload: {
-        playerId: getPlayerForSocket(state, action.payload.socketId),
-        type: action.payload.data[0].type,
-        data: action.payload.data[0].data
-      }
-    })
   }
 
   if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'register player') {
@@ -104,6 +93,12 @@ const reducer = (state = { ids: [], connections: {} }, action) => {
   }
 }
 
+const addClientOptions = (state, options) => {
+  return Object.assign({}, options, {
+    playerId: getPlayerForSocket(state, options.socketId)
+  })
+}
+
 module.exports = function init () {
-  return { name: 'players', middleware, reducer, getPlayerForSocket }
+  return { name: 'players', middleware, reducer, addClientOptions }
 }

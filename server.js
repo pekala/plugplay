@@ -2,20 +2,40 @@ const redux = require('redux')
 const express = require('express')
 const socketio = require('socket.io')
 
-const removeInternalActions = store => next => action => {
+const removeInternalActionsMiddleware = store => next => action => {
   if (action.type.indexOf('@@') !== 0) {
     next(action)
   }
 }
 
-function main (gameReducer = state => (state.game || {}), mapStateToProps, plugins) {
+const clientActionMiddleware = store => next => action => {
+  if (action.type === '@@_ SOCKET_DATA' && action.payload.event === 'player action') {
+    next({
+      type: 'USER_ACTION',
+      payload: {
+        socketId: action.payload.socketId,
+        type: action.payload.data[0].type,
+        data: action.payload.data[0].data
+      }
+    })
+  } else {
+    next(action)
+  }
+}
+
+function main ({
+  dataReducer = state => (state.data || {}),
+  mapStateToClientProps = state => state,
+  plugins = [],
+  port = 3000
+}) {
   const app = express()
-  const server = app.listen(3000, () => console.log('App listening on port 3000'))
+  const server = app.listen(port, () => console.log(`Listening on port ${port}`))
   const io = socketio(server)
 
   const reducer = (state = {}, action) => {
     const baseState = Object.assign({}, state, {
-      game: gameReducer(state, action)
+      data: dataReducer(state, action)
     })
 
     return plugins.reduce((state, plugin) => {
@@ -28,7 +48,7 @@ function main (gameReducer = state => (state.game || {}), mapStateToProps, plugi
     }, baseState)
   }
 
-  const store = redux.createStore(reducer, redux.applyMiddleware(...plugins.map(plugin => plugin.middleware), removeInternalActions))
+  const store = redux.createStore(reducer, redux.applyMiddleware(clientActionMiddleware, ...plugins.map(plugin => plugin.middleware), removeInternalActionsMiddleware))
 
   io.on('connection', socket => {
     store.dispatch({
@@ -62,7 +82,12 @@ function main (gameReducer = state => (state.game || {}), mapStateToProps, plugi
 
   store.subscribe(() => {
     Object.keys(io.sockets.connected).forEach(socketId => {
-      io.sockets.connected[socketId].emit('data sync', mapStateToProps(store.getState(), socketId))
+      const state = store.getState()
+      const finalClientOptions = plugins
+        .map(plugin => plugin.addClientOptions)
+        .reduce((options, addClientOptions) => addClientOptions(state, options), { socketId })
+
+      io.sockets.connected[socketId].emit('data sync', mapStateToClientProps(state, finalClientOptions))
     })
   })
 }

@@ -1,15 +1,21 @@
 const io = require('socket.io-client')
 
-function main (serverUrl, plugins, subscribe) {
+function main ({
+  serverUrl,
+  plugins = [],
+  onPropsUpdated = () => {}
+}) {
   const socket = io(serverUrl)
-  socket.on('data sync', state => subscribe(state))
-  plugins.forEach(plugin => plugin.register(socket))
+  socket.on('data sync', props => onPropsUpdated(props))
+  const actions = plugins.map(plugin => plugin(socket))
 
-  function playerAction (type, data) {
+  function action (type, data) {
     socket.emit('player action', { type, data })
   }
 
-  return { actions: { playerAction } }
+  return actions.reduce((all, current) => Object.assign(all, { [current.name]: current.actions }), {
+    default: action
+  })
 }
 
 module.exports = main

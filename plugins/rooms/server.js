@@ -134,5 +134,11 @@ module.exports = function init ({ roomReducer = state => state, maxPlayers = Inf
     }
   }
 
-  return { name: 'rooms', middleware, reducer, getRoomForPlayer }
+  const addClientOptions = (state, options) => {
+    return Object.assign({}, options, {
+      roomId: getRoomForPlayer(state, options.playerId)
+    })
+  }
+
+  return { name: 'rooms', middleware, reducer, addClientOptions }
 }

@@ -1,26 +1,20 @@
-let socket
+function main (socket) {
+  function create () {
+    socket.emit('create room')
+  }
 
-function register (providedSocket) {
-  socket = providedSocket
-}
+  function join (roomId) {
+    socket.emit('join room', roomId)
+  }
 
-function create () {
-  socket.emit('create room')
-}
+  function leave () {
+    socket.emit('leave room')
+  }
 
-function join (roomId) {
-  socket.emit('join room', roomId)
-}
-
-function leave () {
-  socket.emit('leave room')
-}
-
-function main () {
   return {
-    register,
+    name: 'rooms',
     actions: { create, join, leave }
   }
 }
 
-module.exports = main
+module.exports = () => main
