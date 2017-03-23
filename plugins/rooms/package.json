@@ -1,6 +1,6 @@
 {
   "name": "plugplay-plugin-rooms",
-  "version": "0.0.0",
+  "version": "0.0.1-alpha",
   "main": "server.js",
   "repository": {},
   "author": "Maciek Pekala <m@peka.la>",

@@ -1,7 +1,7 @@
 # plugplay
 <img align="right" src="./logo.jpg">
 
-Framework for building multiplayer games using WebSockets
+Plug-and-play solution for multiplayer games using WebSockets.
 
 ## Server
 Server component is a node application responsible for managing global game state and WebSocket connections.
