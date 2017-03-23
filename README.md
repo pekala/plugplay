@@ -134,4 +134,35 @@ Can be used to send a generic client action to the server. It will trigger serve
 
 ## Plugins
 
-... TODO
+You can extend the functionality provided by plugplay using plugins. Plugins can do one or more of these things:
+- modify a subtree of the state, named after the plugin's name
+- dispatch actions to the state, namespaced by the plugin's name
+- decorate the payload of actions dispatched by other plugins or plugplay's core
+- decorate the `clientInfo` object provided to `mapStateToClientProps` function
+- extend action creators object on the client
+- any other side effects on both server and client (e.g. persistance of data)
+
+### Existing plugins
+See documentation for each to learn how to use them:
+
+ - [players](plugins/players) - adds a notion of players
+ - [rooms](plugins/rooms) - adds an ability to create rooms, which players can join
+
+### Creating plugins
+The following only concerns plugins developers, and is not required to know to make games with `plugplay`.
+#### Server API
+Server-side, plugins expose a factory function, which can be used to customize plugin's behaviour using options.
+The factory function returns an instance of the plugin, which should passed to `plugplay` using `plugins`
+array in options.
+
+```javascript
+pluginFactory(options: Object) => pluginInstance: PluginInstanceObject
+```
+```javascript
+PluginInstanceObject: {
+    name: string,
+    middleware: (store: Object) => (next: () => void) => (action: Object) => void,
+    reducer: (state: Object, action: Object) => nextState: Object,
+    addClientOptions (state: Object, clientInfo: Object) => decoratedClientInfo: Object,
+}
+```
