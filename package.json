@@ -8,7 +8,7 @@
   "scripts": {
     "build-client": "browserify example/index.client.js -o example/bundle.js",
     "watch-client": "watchify example/index.client.js -o example/bundle.js",
-    "start": "node example/index.server.js"
+    "start": "nodemon example/index.server.js"
   },
   "dependencies": {
     "express": "^4.15.0",
@@ -19,6 +19,7 @@
   "devDependencies": {
     "browserify": "^14.1.0",
     "jest": "^19.0.2",
+    "nodemon": "^1.11.0",
     "standard": "^9.0.1",
     "watchify": "^3.9.0",
     "yo-yo": "^1.4.0"
