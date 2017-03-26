@@ -4,7 +4,10 @@ function main (socket) {
   socket.on('connect', () => {
     socket.emit('register player', playerId)
   })
-  return { name: 'players' }
+  function changeName (name) {
+    socket.emit('players:changeName', name)
+  }
+  return { name: 'players', actions: { changeName } }
 }
 
 module.exports = () => main

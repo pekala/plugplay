@@ -21,11 +21,19 @@ function Results ({ hasWon, onRematch }) {
   </div>`
 }
 
-function Lobby (rooms) {
+function Player (me) {
+  return yo`<div class="Player">
+    Me: <input type="text" id="playerName" value="${me.name}" />
+    <button onclick=${() => actions.players.changeName(document.getElementById('playerName').value)}>Change name</button>
+  </div>`
+}
+
+function Lobby (props) {
   return yo`<div class="Lobby">
+    ${Player(props.me)}
     Rooms
     <ul>
-      ${rooms.map(room => yo`<li>
+      ${props.rooms.map(room => yo`<li>
         ${room.roomId} (${room.players.length} players)
         <button onclick=${() => actions.rooms.join(room.roomId)}>Join</button>
       </li>`)}
@@ -37,7 +45,7 @@ function Lobby (rooms) {
 function Room (props) {
   return yo`<div class="Room">
     Currently in ${props.roomId}
-    <br> Players in room: ${props.players.length} <br>
+    <br> Players in room: ${props.players.length} (${props.players.map(player => player.name).join(',')}) <br>
     ${props.isFull ? 'Room is full' : ''}
     ${props.isReady ? 'Room is ready' : ''}
     <br>${props.isReady && props.isMyTurn ? 'Your turn!' : ''}
@@ -59,11 +67,11 @@ function Room (props) {
 const onCellSelect = cellId => actions.default('cell select', cellId)
 const onRematch = cellId => actions.default('rematch')
 
-function Game (props = { rooms: [] }) {
+function Game (props = { rooms: [], me: {} }) {
   if (props.roomId) {
     return Room(props)
   }
-  return Lobby(props.rooms)
+  return Lobby(props)
 }
 
 const actions = plugplay({

@@ -1,3 +1,5 @@
+const getSillyName = require('sillyname')
+
 function getSocketsForPlayer (state, playerId) {
   return Object
     .keys(state.players.connections)
@@ -24,7 +26,7 @@ const middleware = store => next => action => {
   if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'register player') {
     const playerId = action.payload.data[0]
 
-    if (getSocketsForPlayer(state, playerId).length === 0) {
+    if (state.players.ids.indexOf(playerId) === -1) {
       store.dispatch({
         type: 'players/JOINED',
         payload: {
@@ -61,20 +63,37 @@ const middleware = store => next => action => {
       }
     }, 5000)
   }
+
+  if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'players:changeName') {
+    const playerId = getPlayerForSocket(state, action.payload.socketId)
+    const newName = action.payload.data[0]
+    store.dispatch({
+      type: 'players/CHANGE_NAME',
+      payload: { playerId, newName }
+    })
+  }
 }
 
-const reducer = (state = { ids: [], connections: {} }, action) => {
+const reducer = (state = { ids: [], connections: {}, byId: {} }, action) => {
   switch (action.type) {
     case 'players/JOINED': {
-      const ids = [...state.ids, action.payload.playerId]
+      const playerId = action.payload.playerId
+      const ids = [...state.ids, playerId]
       const connections = Object.assign({}, state.connections, {
-        [action.payload.socketId]: action.payload.playerId
+        [action.payload.socketId]: playerId
       })
-      return Object.assign({}, state, { ids, connections })
+      const byId = Object.assign({}, state.byId, {
+        [playerId]: Object.assign({}, state.byId[playerId], { name: getSillyName() })
+      })
+      return Object.assign({}, state, { ids, connections, byId })
     }
     case 'players/LEFT': {
-      const ids = state.ids.filter(playerId => playerId !== action.payload.playerId)
-      return Object.assign({}, state, { ids })
+      const playerId = action.payload.playerId
+      const ids = state.ids.filter(id => id !== playerId)
+      const byId = Object.assign({}, state.byId, {
+        [playerId]: undefined
+      })
+      return Object.assign({}, state, { ids, byId })
     }
     case 'players/DISCONNECTED': {
       const connections = Object.assign({}, state.connections, {
@@ -87,6 +106,13 @@ const reducer = (state = { ids: [], connections: {} }, action) => {
         [action.payload.socketId]: action.payload.playerId
       })
       return Object.assign({}, state, { connections })
+    }
+    case 'players/CHANGE_NAME': {
+      const playerId = action.payload.playerId
+      const byId = Object.assign({}, state.byId, {
+        [playerId]: Object.assign({}, state.byId[playerId], { name: action.payload.newName })
+      })
+      return Object.assign({}, state, { byId })
     }
     default:
       return state

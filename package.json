@@ -8,12 +8,13 @@
   "scripts": {
     "build-client": "browserify example/index.client.js -o example/bundle.js",
     "watch-client": "watchify example/index.client.js -o example/bundle.js",
-    "start": "nodemon example/index.server.js"
+    "start": "node example/index.server.js"
   },
   "dependencies": {
     "express": "^4.15.0",
     "moniker": "^0.1.2",
     "redux": "^3.6.0",
+    "sillyname": "^0.1.0",
     "socket.io": "^1.7.3"
   },
   "devDependencies": {

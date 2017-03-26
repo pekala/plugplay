@@ -64,22 +64,25 @@ const mapStateToClientProps = (state, { playerId, roomId }) => {
       mySymbol: room.data.playersSymbols[playerId],
       hasWon: room.data.winner === playerId,
       playersSymbols: room.data.playersSymbols,
-      players: room.players,
+      players: room.players.map(id => state.players.byId[id]),
       isReady: room.isReady,
+      me: state.players.byId[playerId],
       roomId
     }
   }
 
   if (roomId) {
     return {
-      players: room.players,
+      players: room.players.map(id => state.players.byId[id]),
       isReady: room.isReady,
+      me: state.players.byId[playerId],
       roomId
     }
   }
 
   return {
-    rooms: state.rooms.ids.map(roomId => state.rooms.byId[roomId])
+    rooms: state.rooms.ids.map(roomId => state.rooms.byId[roomId]),
+    me: state.players.byId[playerId]
   }
 }
 
