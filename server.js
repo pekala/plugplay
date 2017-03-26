@@ -90,6 +90,8 @@ function main ({
       io.sockets.connected[socketId].emit('data sync', mapStateToClientProps(state, finalClientOptions))
     })
   })
+
+  return store.dispatch.bind(store)
 }
 
 module.exports = main

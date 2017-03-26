@@ -4,7 +4,8 @@
 Plug-and-play solution for multiplayer games using WebSockets.
 
 ## Server
-Server component is a node application responsible for managing global game state and WebSocket connections.
+Server component is a node application responsible for managing global game state and WebSocket connections. It's
+basically a Redux application running on the server.
 
 ### Example
 The most basic, noop example:
@@ -23,9 +24,10 @@ plugplay({ dataReducer, mapStateToClientProps, plugins })
 ```
 
 ### API
-The server component exposes one function as a default export. Calling the function starts the server.
+The server component exposes one function as a default export. Calling the function starts the server and returns a
+dispatch function that can be used to dispatch actions to the reducers.
 ```javascript
-plugplay(options: OptionsObject) => void
+plugplay(options: OptionsObject) => dispatch: (action: Object) => any
 ```
 The `OptionsObject` has the following shape:
 ```javascript
