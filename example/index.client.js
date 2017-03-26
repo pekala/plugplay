@@ -3,9 +3,9 @@ const plugplay = require('../client')
 const playersPlugin = require('../plugins/players/client')()
 const roomsPlugin = require('../plugins/rooms/client')()
 
-function Board ({ boardState, symbols, readOnly, onCellSelect }) {
+function Board ({ props, symbols, readOnly, onCellSelect }) {
   return yo`<div class="Board">
-    ${boardState.map((cell, index) =>
+    ${props.map((cell, index) =>
       yo`<label for="board_${index}">
         ${cell === '' ? '' : symbols[cell]}
         <input type="radio" id="board_${index}" onchange=${() => onCellSelect(index)} name="board" ${!readOnly && cell === '' ? '' : 'disabled'} />
@@ -46,7 +46,7 @@ function Room (props) {
     <br><button onclick=${actions.rooms.leave}>Leave room</button><br>
 
     ${props.board ? Board({
-      boardprops: props.board,
+      props: props.board,
       symbols: props.playersSymbols,
       readOnly: !props.isMyTurn || props.winner,
       onCellSelect
@@ -66,11 +66,11 @@ function Game (props = { rooms: [] }) {
   return Lobby(props.rooms)
 }
 
-const el = Game()
-document.body.appendChild(el)
-
 const actions = plugplay({
   serverUrl: 'localhost:3000',
   plugins: [playersPlugin, roomsPlugin],
   onPropsUpdated: props => console.log(props) || yo.update(el, Game(props))
 })
+
+const el = Game()
+document.body.appendChild(el)
