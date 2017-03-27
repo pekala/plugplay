@@ -1,6 +1,6 @@
 {
   "name": "plugplay",
-  "version": "0.0.6-alpha",
+  "version": "0.0.7-alpha",
   "description": "Plug-and-play solution for multiplayer games using WebSockets",
   "repository": {},
   "author": "Maciek Pekala <m@peka.la>",

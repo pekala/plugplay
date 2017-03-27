@@ -1,6 +1,6 @@
 {
   "name": "plugplay-plugin-players",
-  "version": "0.0.3-alpha",
+  "version": "0.0.4-alpha",
   "main": "server.js",
   "repository": {},
   "author": "Maciek Pekala <m@peka.la>",
