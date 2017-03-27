@@ -14,6 +14,11 @@ function getPlayerForSocket (state, socketId) {
 
 const middleware = store => next => action => {
   debug(`Calling the middleware with ${action}`)
+
+  if (!action.payload) {
+    return
+  }
+
   const state = store.getState()
 
   if (getPlayerForSocket(state, action.payload.socketId)) {
@@ -78,6 +83,9 @@ const middleware = store => next => action => {
 
 const reducer = (state = { ids: [], connections: {}, byId: {} }, action) => {
   debug('Reducer called with state:%o and action:%o', state, action)
+  if (!action.payload) {
+    return state
+  }
   switch (action.type) {
     case 'players/JOINED': {
       const playerId = action.payload.playerId

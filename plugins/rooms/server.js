@@ -11,6 +11,10 @@ function getRoom (state, roomId) {
 
 module.exports = function init ({ roomReducer = state => state, maxPlayers = Infinity, minPlayers = 0 }) {
   const middleware = store => next => action => {
+    if (!action.payload) {
+      return
+    }
+
     if (getRoomForPlayer(store.getState(), action.payload.playerId)) {
       debug(`Decorating ${action} playload with roomId`)
       next(Object.assign({}, action, {
@@ -93,7 +97,10 @@ module.exports = function init ({ roomReducer = state => state, maxPlayers = Inf
 
   const reducer = (state = { ids: [], byId: {} }, action) => {
     debug('Reducer called with state:%o and action:%o', state, action)
-    const roomId = action.payload && action.payload.roomId
+    if (!action.payload) {
+      return state
+    }
+    const roomId = action.payload.roomId
     switch (action.type) {
       case 'rooms/PLAYER_JOINED': {
         const players = [...state.byId[roomId].players, action.payload.playerId]

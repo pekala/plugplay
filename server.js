@@ -10,7 +10,7 @@ const removeInternalActionsMiddleware = store => next => action => {
 }
 
 const clientActionMiddleware = store => next => action => {
-  if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'player action') {
+  if (action.type === '@@_SOCKET_DATA' && action.payload && action.payload.event === 'player action') {
     next({
       type: 'USER_ACTION',
       payload: {
