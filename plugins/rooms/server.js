@@ -1,4 +1,5 @@
 const moniker = require('moniker')
+const debug = require('debug')('plugplay-plugin-rooms')
 
 function getRoomForPlayer (state, playerId) {
   return state.rooms.ids.find(id => state.rooms.byId[id].players.indexOf(playerId) > -1)
@@ -11,6 +12,7 @@ function getRoom (state, roomId) {
 module.exports = function init ({ roomReducer = state => state, maxPlayers = Infinity, minPlayers = 0 }) {
   const middleware = store => next => action => {
     if (getRoomForPlayer(store.getState(), action.payload.playerId)) {
+      debug(`Decorating ${action} playload with roomId`)
       next(Object.assign({}, action, {
         payload: Object.assign({}, action.payload, {
           roomId: getRoomForPlayer(store.getState(), action.payload.playerId)
@@ -21,33 +23,35 @@ module.exports = function init ({ roomReducer = state => state, maxPlayers = Inf
     }
 
     if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'create room') {
-      if (getRoomForPlayer(store.getState(), action.payload.playerId)) {
+      const playerId = action.payload.playerId
+      if (getRoomForPlayer(store.getState(), playerId)) {
+        debug(`Player ${playerId} tried to create a room, but is already in one, ignoring`)
         return
       }
+      const roomId = moniker.choose()
+      debug(`Player ${playerId} created a new room (roomId will be ${roomId})`)
       store.dispatch({
         type: 'rooms/CREATE',
-        payload: {
-          roomId: moniker.choose(),
-          playerId: action.payload.playerId
-        }
+        payload: { roomId, playerId }
       })
     }
 
     if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'join room') {
       const state = store.getState()
       const roomId = action.payload.data[0]
-      if (getRoomForPlayer(state, action.payload.playerId)) {
+      const playerId = action.payload.playerId
+      if (getRoomForPlayer(state, playerId)) {
+        debug(`Player ${playerId} tried to join ${roomId}, but is already in one, ignoring`)
         return
       }
       if (getRoom(state, roomId).isFull) {
+        debug(`Player ${playerId} tried to join ${roomId}, but it is full, ignoring`)
         return
       }
+      debug(`Player ${playerId} will join ${roomId}`)
       store.dispatch({
         type: 'rooms/PLAYER_JOINED',
-        payload: {
-          roomId,
-          playerId: action.payload.playerId
-        }
+        payload: { roomId, playerId }
       })
     }
 
@@ -55,24 +59,24 @@ module.exports = function init ({ roomReducer = state => state, maxPlayers = Inf
       (action.type === '@@_SOCKET_DATA' && action.payload.event === 'leave room') ||
       (action.type === 'players/LEFT')
     ) {
+      const playerId = action.payload.playerId
       const state = store.getState()
-      const roomId = getRoomForPlayer(state, action.payload.playerId)
+      const roomId = getRoomForPlayer(state, playerId)
       if (!roomId) {
         return
       }
 
       if (state.rooms.byId[roomId].players.length === 1) {
+        debug(`The last player (${playerId}) has left ${roomId}, closing the room`)
         store.dispatch({
           type: 'rooms/DESTROY',
-          payload: { roomId }
+          payload: { roomId, playerId }
         })
       } else {
+        debug(`The last player ${playerId} has left ${roomId}, closing the room`)
         store.dispatch({
           type: 'rooms/PLAYER_LEFT',
-          payload: {
-            roomId,
-            playerId: action.payload.playerId
-          }
+          payload: { roomId, playerId }
         })
       }
     }
@@ -88,6 +92,7 @@ module.exports = function init ({ roomReducer = state => state, maxPlayers = Inf
   }
 
   const reducer = (state = { ids: [], byId: {} }, action) => {
+    debug('Reducer called with state:%o and action:%o', state, action)
     const roomId = action.payload && action.payload.roomId
     switch (action.type) {
       case 'rooms/PLAYER_JOINED': {

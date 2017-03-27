@@ -1,6 +1,7 @@
 const redux = require('redux')
 const express = require('express')
 const socketio = require('socket.io')
+const debug = require('debug')('plugplay')
 
 const removeInternalActionsMiddleware = store => next => action => {
   if (action.type.indexOf('@@') !== 0) {
@@ -30,7 +31,7 @@ function main ({
   port = 3000
 }) {
   const app = express()
-  const server = app.listen(port, () => console.log(`Listening on port ${port}`))
+  const server = app.listen(port, () => debug(`Started the server on port ${port}`))
   const io = socketio(server)
 
   const reducer = (state = {}, action) => {
@@ -48,9 +49,17 @@ function main ({
     }, baseState)
   }
 
-  const store = redux.createStore(reducer, redux.applyMiddleware(clientActionMiddleware, ...plugins.map(plugin => plugin.middleware), removeInternalActionsMiddleware))
+  const store = redux.createStore(
+    reducer,
+    redux.applyMiddleware(
+      clientActionMiddleware,
+      ...plugins.map(plugin => plugin.middleware),
+      removeInternalActionsMiddleware
+    )
+  )
 
   io.on('connection', socket => {
+    debug(`Socket connection opened id:${socket.id}`)
     store.dispatch({
       type: '@@_SOCKET_EVENT',
       payload: {
@@ -59,6 +68,7 @@ function main ({
       }
     })
     socket.on('disconnect', () => {
+      debug(`Socket connection closed id:${socket.id}`)
       store.dispatch({
         type: '@@_SOCKET_EVENT',
         payload: {
@@ -68,6 +78,7 @@ function main ({
       })
     })
     socket.use(([event, ...data], next) => {
+      debug(`Socket data recevied id:${socket.id} event:${event} data:%o`, data)
       store.dispatch({
         type: '@@_SOCKET_DATA',
         payload: {
@@ -87,7 +98,9 @@ function main ({
         .map(plugin => plugin.addClientOptions)
         .reduce((options, addClientOptions) => addClientOptions(state, options), { socketId })
 
-      io.sockets.connected[socketId].emit('data sync', mapStateToClientProps(state, finalClientOptions))
+      const props = mapStateToClientProps(state, finalClientOptions)
+      io.sockets.connected[socketId].emit('data sync', props)
+      debug(`Props sent to socket ${socketId} data: %o`, props)
     })
   })
 

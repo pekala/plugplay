@@ -1,4 +1,6 @@
 const getSillyName = require('sillyname')
+const debug = require('debug')('plugplay-plugin-players')
+const PLAYER_LEFT_TIMEOUT = 5000
 
 function getSocketsForPlayer (state, playerId) {
   return Object
@@ -11,9 +13,11 @@ function getPlayerForSocket (state, socketId) {
 }
 
 const middleware = store => next => action => {
+  debug(`Calling the middleware with ${action}`)
   const state = store.getState()
 
   if (getPlayerForSocket(state, action.payload.socketId)) {
+    debug(`Decorating ${action} playload with playerId`)
     next(Object.assign({}, action, {
       payload: Object.assign({}, action.payload, {
         playerId: getPlayerForSocket(state, action.payload.socketId)
@@ -25,48 +29,46 @@ const middleware = store => next => action => {
 
   if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'register player') {
     const playerId = action.payload.data[0]
+    const socketId = action.payload.socketId
 
     if (state.players.ids.indexOf(playerId) === -1) {
+      debug(`Connection from new client detected, player ${playerId} joining from socket ${socketId}`)
       store.dispatch({
         type: 'players/JOINED',
-        payload: {
-          socketId: action.payload.socketId,
-          playerId
-        }
+        payload: { socketId, playerId }
       })
     } else {
+      debug(`Connection from known client detected, player ${playerId} reconnected from socket ${socketId}`)
       store.dispatch({
         type: 'players/RECONNECTED',
-        payload: {
-          socketId: action.payload.socketId,
-          playerId
-        }
+        payload: { socketId, playerId }
       })
     }
   }
 
   if (action.type === '@@_SOCKET_EVENT' && action.payload.event === 'disconnect') {
     const playerId = getPlayerForSocket(state, action.payload.socketId)
+    const socketId = action.payload.socketId
+    debug(`Player ${playerId} termianted connection on socket ${socketId}`)
     store.dispatch({
       type: 'players/DISCONNECTED',
-      payload: {
-        socketId: action.payload.socketId,
-        playerId
-      }
+      payload: { socketId, playerId }
     })
     setTimeout(() => {
       if (getSocketsForPlayer(state, playerId).length === 0) {
+        debug(`Player ${playerId} had no connections for ${PLAYER_LEFT_TIMEOUT}ms, player left`)
         store.dispatch({
           type: 'players/LEFT',
           payload: { playerId }
         })
       }
-    }, 5000)
+    }, PLAYER_LEFT_TIMEOUT)
   }
 
   if (action.type === '@@_SOCKET_DATA' && action.payload.event === 'players:changeName') {
     const playerId = getPlayerForSocket(state, action.payload.socketId)
     const newName = action.payload.data[0]
+    debug(`Player ${playerId} requested to change the name to ${newName}`)
     store.dispatch({
       type: 'players/CHANGE_NAME',
       payload: { playerId, newName }
@@ -75,6 +77,7 @@ const middleware = store => next => action => {
 }
 
 const reducer = (state = { ids: [], connections: {}, byId: {} }, action) => {
+  debug('Reducer called with state:%o and action:%o', state, action)
   switch (action.type) {
     case 'players/JOINED': {
       const playerId = action.payload.playerId
