@@ -96,6 +96,7 @@ function main ({
       const state = store.getState()
       const finalClientOptions = plugins
         .map(plugin => plugin.addClientOptions)
+        .filter(addClientOptions => !!addClientOptions)
         .reduce((options, addClientOptions) => addClientOptions(state, options), { socketId })
 
       const props = mapStateToClientProps(state, finalClientOptions)
